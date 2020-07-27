@@ -1,75 +1,86 @@
 import React, { Component } from 'react';
 
-import './person-details.css';
-import SwapiService from "../../services/swapi-service";
+import './item-details.css';
 import Spinner from "../spinner";
 
-export default class PersonDetails extends Component {
+const Record = ({item, field, label}) => {
+    return(
+        <li className="list-group-item">
+            <span className="term">{label}</span>
+            <span>{item[field]}</span>
+        </li>
+    );
+};
 
-    swapiService = new SwapiService();
+export {Record};
+
+export default class ItemDetails extends Component {
 
     state = {
-        person: null,
+        item: null,
+        image: null
     };
 
     componentDidMount() {
-        this.updatePerson();
+        this.updateItem();
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        if (this.props.personId !== prevProps.personId) {
-            this.setState({person: null});
-            this.updatePerson();
+        if (this.props.itemId !== prevProps.itemId) {
+            this.setState({item: null});
+            this.updateItem();
         }
     }
 
-    updatePerson = () => {
-        const {personId} = this.props;
-        if (personId === null) {
+    updateItem = () => {
+        const {itemId, getData, getImageUrl} = this.props;
+        if (itemId === null) {
             return;
         }
 
-        this.swapiService.getPerson(personId)
-            .then((person) => {
+        getData(itemId)
+            .then((item) => {
                 this.setState({
-                    person
+                    item,
+                    image: getImageUrl(item)
                 });
             })
     };
 
     render() {
-        if (this.props.personId === null) {
-            return <span>Select a person for details.</span>
-        } else if (this.state.person === null) {
+        if (this.props.itemId === null) {
+            return <span>Select an item for details.</span>
+        } else if (this.state.item === null) {
             return(
-                <div className="person-details card">
+                <div className="item-details card">
                     <Spinner />
                 </div>
             );
         }
 
-         const {id, name, gender, birthYear, eyeColor} = this.state.person;
+
+        const item = this.state.item;
+        const {id, name, gender, birthYear, eyeColor} = item;
 
         return (
-            <div className="person-details card">
-                <img className="person-image"
-                     src={`https://starwars-visualguide.com/assets/img/characters/${id}.jpg`} />
+            <div className="item-details card">
+                <img className="item-image"
+                     src={this.state.image} />
 
                 <div className="card-body">
                     <h4>{name}</h4>
                     <ul className="list-group list-group-flush">
-                        <li className="list-group-item">
-                            <span className="term">Gender</span>
-                            <span>{gender}</span>
-                        </li>
-                        <li className="list-group-item">
-                            <span className="term">Birth Year</span>
-                            <span>{birthYear}</span>
-                        </li>
-                        <li className="list-group-item">
-                            <span className="term">Eye Color</span>
-                            <span>{eyeColor}</span>
-                        </li>
+                        {
+                            React.Children.map(
+                                this.props.children,
+                                (child, index) => {
+                                    return React.cloneElement(
+                                        child,
+                                        {item}
+                                    );
+                                }
+                            )
+                        }
                     </ul>
                 </div>
             </div>
